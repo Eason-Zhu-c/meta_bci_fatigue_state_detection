@@ -5,8 +5,6 @@ from .data_logger import DataLogger
 from .fatigue_prompt import FatiguePromptUI
 from .label_viewer import LabelViewerUI
 from .subject_input import SubjectNameInputUI
-from .fatigue_detection_paradigm import FatigueDetectionParadigm
-from metabci.brainstim.framework import Experiment
 from .nd_device_demo import tcp_test
 import time
 import math
@@ -65,7 +63,7 @@ class DataCollectionUI:
                     self.nd_device = self.NdDevice(self.eeg_package_count, self.eog_package_count, mode='tcp', com='', tcp_ip='192.168.0.111', tcp_port=8899, host_mac_bytes=None)
                     self.nd_device.start()  # 启动设备
 
-                    index=0
+                    index = 0
                     while index < 100:  # 循环10次
                         time.sleep(0.1)  # 每0.1秒读取一次数据
 
@@ -85,30 +83,11 @@ class DataCollectionUI:
 
             if mouse.isPressedIn(self.start_button):
                 print(">>> begin data collection 1 ...")
-                # 实例化并注册“伪范式”
-                fatigue_paradigm = FatigueDetectionParadigm(win=self.win)
-
-                # 创建实验对象并注册范式（但不真正显示）
-                mon = monitors.Monitor(name='primary_monitor', width=59.6, distance=60)
-                mon.setSizePix([1920, 1080])
-                ex = Experiment(
-                    monitor=mon,
-                    bg_color_warm=np.array([0, 0, 0]),
-                    screen_id=0,
-                    win_size=[1920, 1080],
-                    is_fullscr=False,
-                    record_frames=False,
-                    disable_gc=False,
-                    process_priority='normal',
-                    use_fbo=False,
-                )
-                # 注册范式（即使没有视觉刺激，也用于标记时间戳或准备后续处理）
-                fatigue_paradigm.register_to_experiment(ex)  # 使用新定义的方法
 
                 core.wait(0.2)  # 等待0.2秒
                 # self.input_subject_name()  # 输入被试名
                 if self.input_subject_name():
-                    self.run_data_collection(ex)  # 将实验对象传递给数据采集过程
+                    self.run_data_collection()  # 将实验对象传递给数据采集过程
 
             elif mouse.isPressedIn(self.back_button):
                 self.return_to_main = True
@@ -119,7 +98,7 @@ class DataCollectionUI:
                     break
         return self.return_to_main   # 返回是否回到主界面的标志
 
-    def run_data_collection(self, ex):
+    def run_data_collection(self):
         """数据采集主流程"""
         if self.connect:
             connect_text = '设备已连接，脑电与标签数据采集中。\n目前设置提示框间隔为6s'
@@ -127,6 +106,7 @@ class DataCollectionUI:
             connect_text = '设备未连接，标签数据采集中。\n目前设置提示框间隔为6s'
 
         data_list = np.empty((8, 0))  # 初始化一个空的 (8, 0) 数组，用于存eeg数据
+        label_list = []
         win = self.win
         logger = DataLogger(self.subject_name)
         clock = core.Clock()
@@ -166,11 +146,34 @@ class DataCollectionUI:
             if mouse.isPressedIn(end_button):
                 if self.connect:
                     # nd_device.close()  # 关闭设备连接
-                    save_path = os.path.join(os.path.dirname(__file__), 'data')  # 获取当前文件夹下的 data 目录
+                    save_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data')  # 获取上级文件夹下的 data 目录
                     if not os.path.exists(save_path):
                         os.makedirs(save_path)  # 创建目录
                     data_file_path = os.path.join(save_path, f'EEG_{self.subject_name}.mat')
-                    savemat(data_file_path, {'EEG': data_list})
+                    if data_list.shape[1] < 1416000:
+                        data_list = np.pad(data_list, ((0, 0), (0, 1416000 - data_list.shape[1])), mode='constant')
+                    else:
+                        data_list = data_list[:, :1416000]
+                    # 转置数据
+                    data_list = data_list.T
+                    data_list = data_list[:, 4:]
+                    # 创建一个形状为(1416000, 17)的矩阵
+                    matrix = np.zeros((1416000, 17))
+                    # 将数据填充到指定位置
+                    matrix[:, [8, 10, 14, 16]] = data_list[:, [0, 1, 2, 3]]  # 通道0, 1, 2, 3填充到8, 10, 14, 16
+                    savemat(data_file_path, {'EEG': {'data': matrix}})
+
+                #保存标签数据
+                if len(label_list) < 885:
+                    label_list = label_list + [0] * (885 - len(label_list))
+                else:
+                    label_list = label_list[: 885]
+                save_label_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'label')  # 获取上级文件夹下的 label 目录
+                if not os.path.exists(save_label_path):
+                    os.makedirs(save_label_path)  # 创建目录
+                label_file_path = os.path.join(save_label_path, f'label_{self.subject_name}.mat')
+                savemat(label_file_path, {'perclos': label_list})
+
                 logger.write_end_time()
                 logger.close()
                 # 提示用户数据采集结束，即将返回主界面
@@ -188,10 +191,14 @@ class DataCollectionUI:
                 level, prompt_start_time, key_press_time = fatigue_prompt.show_prompt()
                 logger.write_prompt_shown(prompt_start_time)
                 logger.write_user_input(level, key_press_time)
+                if int(level) == -1:
+                    label_list.append(int(2))
+                else:
+                    label_list.append(int(level)-1)
 
                 # 同步发送LSL事件
-                if hasattr(ex, 'send_event'):
-                    ex.send_event(key='prompt', value=str(level))  # 示例：向LSL发送事件标记
+                # if hasattr(ex, 'send_event'):
+                #     ex.send_event(key='prompt', value=str(level))  # 示例：向LSL发送事件标记
 
                 last_prompt_time = current_time  # 更新上一次弹出时间
 

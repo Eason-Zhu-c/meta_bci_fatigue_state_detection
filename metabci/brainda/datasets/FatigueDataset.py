@@ -1,8 +1,8 @@
 from typing import Dict
-from metabci.brainda.datasets.base import BaseDataset  # 引用 BaseDataset
-from .setup_event import *
 from mne.io import Raw
 
+from metabci.brainda.datasets.base import BaseDataset  # 引用 BaseDataset
+from metabci.brainda.utils.setup_event import *
 
 class FatigueDataset(BaseDataset):
     # 数据集的通道名

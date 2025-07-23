@@ -1,10 +1,10 @@
 from psychopy import visual, event, core
 from psychopy.visual import ButtonStim
 from metabci.brainflow.workers import ProcessWorker
-from fatigue_detection.model_utils.myNet import *
+from metabci.brainda.algorithms.model_utils.myNet import *
 import torch
 from torch.utils.data import Dataset, DataLoader
-from fatigue_detection.model_utils.DE_3D_Feature import *
+from metabci.brainda.algorithms.model_utils.DE_3D_Feature import *
 from scipy.io import loadmat
 import warnings
 from metabci.brainflow.amplifiers import NeuroScan

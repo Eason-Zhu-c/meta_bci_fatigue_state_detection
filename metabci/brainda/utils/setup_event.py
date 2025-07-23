@@ -2,6 +2,7 @@ import numpy as np
 from scipy.io import loadmat
 from mne import create_info
 from mne.io import RawArray
+
 # === Step 1: 加载 EEG 数据 ===
 def setup_event(data_path):
     eeg_mat = loadmat(data_path, squeeze_me=True)

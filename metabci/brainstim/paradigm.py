@@ -7,9 +7,11 @@ import os.path as op
 import string
 import numpy as np
 from math import pi
-from psychopy import data, visual, event
+from psychopy import data, visual, event, monitors
 from psychopy.visual.circle import Circle
 from pylsl import StreamInlet, resolve_byprop  # type: ignore
+
+from fatigue_detection.main_interface import MainExperiment
 from .utils import NeuroScanPort, NeuraclePort, _check_array_like
 import threading
 from copy import copy
@@ -3188,3 +3190,54 @@ def paradigm(
                     VSObject.text_response.draw()
                     iframe += 1
                     win.flip()
+    elif pdim == "fatigue":
+        print("开始执行 fatigue 范式")
+
+        # 直接调用 Fatigue 对象的 run_task 方法
+        VSObject.run_task()
+
+        print("fatigue 范式执行结束")
+
+
+class fatigue(VisualStim):
+    def __init__(self, win):
+        super().__init__(win)
+
+        # 添加 MetaBCI 所需的默认属性
+        self.refresh_rate = 60  # 屏幕刷新率
+        self.stim_time = 1  # 刺激时长
+        self.display_time = 1  # 显示时长
+        self.index_time = 1  # 提示时长
+        self.rest_time = 0.5  # 休息时长
+        self.response_time = 1  # 反应时长
+        self.nrep = 1  # block 数目
+        self.pdim = "fatigue"  # 范式类型
+        self.port_addr = None  # 端口地址
+        self.lsl_source_id = None  # LSL 源 ID
+        self.online = False  # 是否在线实验
+
+    def config_task(self):
+        pass
+
+    def run_task(self):
+        # 在这里启动您的 MainExperiment 界面
+        if self.win is not None:
+            self.win.close()  # 关闭窗口
+            self.win = None  # 防止后续引用
+
+        mon = monitors.Monitor(name='primary_monitor', width=59.6, distance=60)
+        mon.setSizePix([1920, 1080])
+
+        ex = MainExperiment(
+            monitor=mon,
+            bg_color_warm=np.array([0, 0, 0]),
+            screen_id=0,
+            win_size=[1280, 800],
+            # win_size=[1920, 1080],
+            is_fullscr=False,
+            record_frames=False,
+            disable_gc=False,
+            process_priority='normal',
+            use_fbo=False)
+
+        ex.main_interface()

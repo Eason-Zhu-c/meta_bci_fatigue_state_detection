@@ -1,9 +1,10 @@
 import torch
 from scipy.io import loadmat
 import numpy as np
-from fatigue_detection.model_utils.myNet import SFT_Net
-from fatigue_detection.model_utils.toolbox import accuracy_score, label_2class, myDataset_5cv
-from fatigue_detection.model_utils.DE_3D_Feature import decompose_to_DE
+
+from metabci.brainda.algorithms.model_utils.myNet import SFT_Net
+from metabci.brainda.algorithms.model_utils.toolbox import accuracy_score, label_2class, myDataset_5cv
+from metabci.brainda.algorithms.model_utils.DE_3D_Feature import decompose_to_DE
 
 
 def process_data(data):

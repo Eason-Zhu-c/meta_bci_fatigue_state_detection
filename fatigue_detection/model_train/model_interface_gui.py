@@ -2,9 +2,10 @@ from psychopy import visual, event, core
 from psychopy.visual import ButtonStim
 from tkinter import Tk, filedialog
 import os
-from .trainer import process_data, train_model  # 假设 trainer.py 在同级目录下
-from .FatigueDataset import *
-from .FatigueParadigm import *
+
+from metabci.brainda.utils.trainer import process_data, train_model  # 假设 trainer.py 在同级目录下
+from metabci.brainda.datasets.FatigueDataset import *
+from metabci.brainda.paradigms.FatigueParadigm import *
 
 class ModelTrainingUI:
     def __init__(self, win):

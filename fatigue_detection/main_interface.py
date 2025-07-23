@@ -22,12 +22,21 @@ class MainExperiment(Experiment):
         win.units = "norm"
         # 获取当前文件所在目录
         current_dir = os.path.dirname(os.path.abspath(__file__))
-        icon_path = os.path.join(current_dir, 'Icons', 'wuyiuniversity.png')
+        icon_path_wuyi = os.path.join(current_dir, 'Icons', 'wuyiuniversity.png')
+        icon_path_zhejiang = os.path.join(current_dir, 'Icons', 'zhejianguniversity.png')
 
-        # 创建图标 stimulus
+        # 创建五邑大学图标 stimulus
         icon = ImageStim(
             win=win,
-            image=icon_path,
+            image=icon_path_wuyi,
+            size=(0.25, 0.4),  # 可调整大小
+            pos=(0.62, 0.79)  # (x、y)右上角位置（相对于 norm 单位）
+        )
+
+        # 创建浙江大学图标 stimulus
+        icon_zhejiang = ImageStim(
+            win=win,
+            image=icon_path_zhejiang,
             size=(0.25, 0.4),  # 可调整大小
             pos=(0.87, 0.79)  # (x、y)右上角位置（相对于 norm 单位）
         )
@@ -43,6 +52,7 @@ class MainExperiment(Experiment):
         # Display the buttons and listen for events
         while True:
             icon.draw()
+            icon_zhejiang.draw()
             title_text.draw()
             button_collect.draw()
             button_train.draw()

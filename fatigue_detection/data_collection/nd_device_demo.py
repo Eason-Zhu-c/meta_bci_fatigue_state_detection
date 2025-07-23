@@ -159,10 +159,10 @@ class NdDevice(NdDeviceBase):
             self.eog_datas.removeHead()
         self.eog_datas.add(data)  # 将新数据添加到链表中
 
-    def read_latest_eeg_data(self, target_freq=250):
+    def read_latest_eeg_data(self, target_freq=200):
         """
         读取最新的脑电图数据，并按照目标频率进行下采样
-        :param target_freq: 目标采样频率（Hz），默认250Hz
+        :param target_freq: 目标采样频率（Hz），默认200Hz
         :return: 下采样后的脑电图数据，形状为(8,N)
         """
         current_time = int(round(time.time() * 1000))
@@ -171,7 +171,7 @@ class NdDevice(NdDeviceBase):
         device_freq = 1000  # 设备采样率1000Hz
         
         # 计算下采样比率
-        downsample_ratio = int(device_freq / target_freq)  # 1000/250 = 4
+        downsample_ratio = int(device_freq / target_freq)  # 1000/200 = 5
         
         # 获取最新数据包
         latest_packet = None
@@ -265,12 +265,12 @@ class NdDevice(NdDeviceBase):
             need_data.append(ele['data'])  # 收集数据
         return count >= read_point_count, need_data  # 返回是否有足够的数据点和收集的数据
 
-    def read_eeg_data(self, start_millis_second, read_millisecond, freq = 250):
+    def read_eeg_data(self, start_millis_second, read_millisecond, freq = 200):
         """
         读取指定时间段的脑电图数据，根据模式选择对应的读取方法
         :param start_millis_second: 起始时间戳（毫秒）
         :param read_millisecond: 要读取的时间长度（毫秒），注意不是结束时间戳！
-        :param freq: 采样频率（Hz），默认250Hz
+        :param freq: 采样频率（Hz），默认200Hz
         :return: 指定时间段的脑电图数据
         """
         if self.mode == 'serial':
